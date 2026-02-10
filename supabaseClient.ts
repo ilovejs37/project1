@@ -2,37 +2,23 @@
 import { createClient } from '@supabase/supabase-js';
 
 /**
- * 환경 변수 안전하게 가져오기
- * 사용자 요청에 따라 VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY를 우선적으로 확인합니다.
+ * 프로젝트 가이드라인에 따라 환경 변수는 process.env에서 직접 가져옵니다.
+ * VITE_SUPABASE_URL 및 VITE_SUPABASE_ANON_KEY는 환경 설정에서 주입된 것으로 간주합니다.
  */
-const getEnv = (key: string): string => {
-  if (typeof process !== 'undefined' && process.env && process.env[key]) {
-    return process.env[key] as string;
-  }
-  if (typeof window !== 'undefined' && (window as any).importMetaEnv && (window as any).importMetaEnv[key]) {
-    return (window as any).importMetaEnv[key];
-  }
-  if (import.meta && (import.meta as any).env && (import.meta as any).env[key]) {
-    return (import.meta as any).env[key];
-  }
-  return '';
-};
+const supabaseUrl = process.env.VITE_SUPABASE_URL || '';
+const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY || '';
 
-const supabaseUrl = getEnv('VITE_SUPABASE_URL');
-const supabaseAnonKey = getEnv('VITE_SUPABASE_ANON_KEY');
-
-// 환경 변수 누락 시 콘솔에 경고창을 띄워 개발자가 인지하기 쉽게 합니다.
+// 환경 변수 부재 시 콘솔 경고 (애플리케이션 구동 중 에러 추적용)
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.error(
-    "Supabase configuration missing!\n" +
-    "Please check your environment variables:\n" +
-    "- VITE_SUPABASE_URL\n" +
-    "- VITE_SUPABASE_ANON_KEY"
+  console.warn(
+    "Supabase configuration keys are missing in process.env!\n" +
+    "Ensure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are provided in the environment secrets."
   );
 }
 
-// 실제 URL이 없을 경우 라이브러리 에러 방지를 위한 placeholder 주소 사용
+// createClient 호출 시 URL이 비어있으면 라이브러리 내부에서 에러가 발생하므로 
+// 실제 값이 있을 때만 정상 작동하며, 없을 경우 App.tsx의 에러 핸들링에서 잡힙니다.
 export const supabase = createClient(
-  supabaseUrl || 'https://your-project-id.supabase.co', 
-  supabaseAnonKey || 'your-anon-key'
+  supabaseUrl || 'https://placeholder.supabase.co', 
+  supabaseAnonKey || 'placeholder-key'
 );

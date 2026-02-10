@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from './supabaseClient';
 import { Candidate, AssignmentConfig, AssignmentResult } from './types';
-import { Users, ClipboardList, CheckCircle2, RefreshCw, XCircle, AlertCircle, Info, ChevronRight, Database } from 'lucide-react';
+import { Users, ClipboardList, CheckCircle2, RefreshCw, XCircle, AlertCircle, Info, ChevronRight, Database, Settings } from 'lucide-react';
 
 const App: React.FC = () => {
   const [candidates, setCandidates] = useState<Candidate[]>([]);
@@ -18,17 +18,25 @@ const App: React.FC = () => {
   const fetchData = useCallback(async () => {
     setLoading(true);
     setError(null);
+
+    // 환경 변수 체크
+    if (!process.env.VITE_SUPABASE_URL || !process.env.VITE_SUPABASE_ANON_KEY) {
+      setError("Supabase 환경 변수(URL/Key)가 설정되지 않았습니다. 프로젝트 설정에서 Secret을 확인해주세요.");
+      setLoading(false);
+      return;
+    }
+
     try {
       // 1. 'candidates' 테이블에서 명단 읽기
       const { data: candData, error: candError } = await supabase
         .from('candidates')
         .select('*')
-        .order('order_num', { ascending: true });
+        .order('created_index', { ascending: true });
 
       if (candError) throw new Error(`Candidates Table Error: ${candError.message}`);
       
       if (!candData || candData.length === 0) {
-        throw new Error("명단(candidates) 테이블이 비어있습니다. DB에 데이터를 추가해주세요.");
+        throw new Error("명단(candidates) 테이블이 비어있거나 접근할 수 없습니다.");
       }
       setCandidates(candData);
 
@@ -43,7 +51,11 @@ const App: React.FC = () => {
 
     } catch (err: any) {
       console.error("Fetch Error:", err);
-      setError(err.message || "서버와의 통신 중 알 수 없는 오류가 발생했습니다.");
+      if (err.message === 'Failed to fetch' || err.name === 'TypeError') {
+        setError("데이터베이스 연결에 실패했습니다. (Failed to fetch). Supabase URL이 올바른지, 혹은 네트워크 상태를 확인하세요.");
+      } else {
+        setError(err.message || "서버와의 통신 중 알 수 없는 오류가 발생했습니다.");
+      }
     } finally {
       setLoading(false);
     }
@@ -79,7 +91,7 @@ const App: React.FC = () => {
 
       for (let i = 0; i < count; i++) {
         const idx = (startIndex + i) % total;
-        assignedNames.push(candidates[idx].name);
+        assignedNames.push(candidates[idx].names);
       }
 
       const nextIndex = (startIndex + count) % total;
@@ -98,7 +110,7 @@ const App: React.FC = () => {
       });
     } catch (err: any) {
       console.error("Assignment Error:", err);
-      setError("배정 처리 중 오류가 발생했습니다. DB 권한 설정을 확인하세요.");
+      setError("배정 처리 중 오류가 발생했습니다. DB 쓰기 권한(RLS)을 확인하세요.");
     } finally {
       setAssigning(false);
     }
@@ -120,7 +132,7 @@ const App: React.FC = () => {
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="flex flex-col items-center gap-4">
           <RefreshCw className="w-10 h-10 text-blue-600 animate-spin" />
-          <p className="text-slate-600 font-bold">Supabase에서 명단을 불러오는 중...</p>
+          <p className="text-slate-600 font-bold">시스템 초기화 및 데이터 로딩 중...</p>
         </div>
       </div>
     );
@@ -140,8 +152,10 @@ const App: React.FC = () => {
                 기계부 퇴사자/부재자 특허결정서 담당자 배정
               </h1>
               <div className="flex items-center gap-2 mt-1.5">
-                <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse"></div>
-                <p className="text-slate-400 font-semibold text-xs uppercase tracking-wider">Database Connected & Real-time Sync Active</p>
+                <div className={`h-2 w-2 rounded-full ${error ? 'bg-red-500' : 'bg-green-500 animate-pulse'}`}></div>
+                <p className="text-slate-400 font-semibold text-xs uppercase tracking-wider">
+                  {error ? 'Connection Failed' : 'Database Connected & Real-time Active'}
+                </p>
               </div>
             </div>
           </div>
@@ -149,19 +163,29 @@ const App: React.FC = () => {
             onClick={fetchData}
             className="flex items-center gap-2 px-6 py-3 text-sm font-bold text-slate-600 hover:text-blue-600 hover:bg-blue-50 transition-all rounded-xl border border-slate-200"
           >
-            <RefreshCw className="w-4 h-4" /> 명단 갱신
+            <RefreshCw className="w-4 h-4" /> 다시 시도
           </button>
         </header>
 
         {error && (
           <div className="bg-red-50 border-2 border-red-100 p-6 rounded-2xl flex items-start gap-4 text-red-800 shadow-sm animate-in fade-in slide-in-from-top-4">
             <div className="p-2 bg-red-100 rounded-lg">
-              <Database className="w-6 h-6 shrink-0 text-red-600" />
+              <AlertCircle className="w-6 h-6 shrink-0 text-red-600" />
             </div>
             <div>
-              <p className="font-bold text-lg">데이터 연결 오류</p>
+              <p className="font-bold text-lg">데이터 연결에 실패했습니다</p>
               <p className="opacity-90 font-medium">{error}</p>
-              <p className="text-xs mt-2 text-red-500 font-bold uppercase tracking-tight">Check: Table Name 'candidates', URL & Key, RLS Policies</p>
+              <div className="mt-4 p-4 bg-white/50 rounded-xl border border-red-200">
+                <p className="text-xs font-bold text-red-700 flex items-center gap-2 mb-2 uppercase tracking-tighter">
+                  <Settings className="w-3 h-3" /> 해결 가이드
+                </p>
+                <ul className="text-xs text-red-600/80 list-disc list-inside space-y-1 font-medium">
+                  <li><strong>Project Secrets:</strong> VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY 설정 확인</li>
+                  <li><strong>Table Name:</strong> 'candidates' 테이블 존재 여부 확인</li>
+                  <li><strong>RLS Policy:</strong> Supabase 대시보드에서 public 읽기 권한 확인</li>
+                  <li><strong>URL Check:</strong> Supabase API URL이 올바른 형식인지 확인</li>
+                </ul>
+              </div>
             </div>
           </div>
         )}
@@ -283,7 +307,7 @@ const App: React.FC = () => {
                         </span>
                         <div>
                           <p className={`text-lg transition-colors ${isNext ? 'font-black text-slate-900' : 'font-bold text-slate-500'}`}>
-                            {cand.name}
+                            {cand.names}
                           </p>
                           <p className="text-[10px] text-slate-400 font-bold uppercase">Machine Engineering</p>
                         </div>
@@ -307,7 +331,7 @@ const App: React.FC = () => {
               <div className="mt-8 p-5 bg-slate-900 rounded-2xl flex items-center justify-between">
                 <div className="flex flex-col">
                   <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Current Pending</span>
-                  <span className="text-xl font-black text-white">{candidates[config?.current_index ?? 0]?.name || '---'}</span>
+                  <span className="text-xl font-black text-white">{candidates[config?.current_index ?? 0]?.names || '---'}</span>
                 </div>
                 <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center">
                   <ChevronRight className="w-6 h-6 text-white" />

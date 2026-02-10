@@ -1,8 +1,8 @@
 
 export interface Candidate {
   id: number;
-  name: string;
-  order_num: number;
+  names: string; // 'name'에서 'names'로 변경 (DB 컬럼명 일치)
+  created_index: number;
   department: string;
 }
 
