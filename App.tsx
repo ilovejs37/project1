@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from './supabaseClient';
 import { Candidate, AssignmentConfig, AssignmentResult } from './types';
-import { Users, ClipboardList, CheckCircle2, RefreshCw, XCircle, AlertCircle, Info, ChevronRight } from 'lucide-react';
+import { Users, ClipboardList, CheckCircle2, RefreshCw, XCircle, AlertCircle, Info, ChevronRight, Database } from 'lucide-react';
 
 const App: React.FC = () => {
   const [candidates, setCandidates] = useState<Candidate[]>([]);
@@ -13,44 +13,45 @@ const App: React.FC = () => {
   const [result, setResult] = useState<AssignmentResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   
-  // Realtime subscription ref
   const subscriptionRef = useRef<any>(null);
 
-  // Initial data fetch (자동 로드)
   const fetchData = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      // 명단 읽어오기
+      // 1. 'candidates' 테이블에서 명단 읽기
       const { data: candData, error: candError } = await supabase
         .from('candidates')
         .select('*')
         .order('order_num', { ascending: true });
 
-      if (candError) throw candError;
-      setCandidates(candData || []);
+      if (candError) throw new Error(`Candidates Table Error: ${candError.message}`);
+      
+      if (!candData || candData.length === 0) {
+        throw new Error("명단(candidates) 테이블이 비어있습니다. DB에 데이터를 추가해주세요.");
+      }
+      setCandidates(candData);
 
-      // 현재 배정 순번 상태 읽어오기
+      // 2. 'assignment_state' 테이블에서 상태 읽기
       const { data: configData, error: configError } = await supabase
         .from('assignment_state')
         .select('*')
         .single();
 
-      if (configError) throw configError;
+      if (configError) throw new Error(`Assignment State Error: ${configError.message}`);
       setConfig(configData);
+
     } catch (err: any) {
       console.error("Fetch Error:", err);
-      setError("데이터를 불러오는 중 오류가 발생했습니다. Supabase 환경 변수 설정을 확인하세요.");
+      setError(err.message || "서버와의 통신 중 알 수 없는 오류가 발생했습니다.");
     } finally {
       setLoading(false);
     }
   }, []);
 
-  // 실시간 구독 설정
   useEffect(() => {
     fetchData();
 
-    // assignment_state 테이블의 변경사항을 감시하여 자동 갱신
     subscriptionRef.current = supabase
       .channel('public:assignment_state')
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'assignment_state' }, payload => {
@@ -76,7 +77,6 @@ const App: React.FC = () => {
       const assignedNames: string[] = [];
       const total = candidates.length;
 
-      // 명단에서 순서대로 필요한 인원 추출
       for (let i = 0; i < count; i++) {
         const idx = (startIndex + i) % total;
         assignedNames.push(candidates[idx].name);
@@ -84,7 +84,6 @@ const App: React.FC = () => {
 
       const nextIndex = (startIndex + count) % total;
 
-      // DB의 순번 데이터 업데이트
       const { error: updateError } = await supabase
         .from('assignment_state')
         .update({ current_index: nextIndex })
@@ -92,7 +91,6 @@ const App: React.FC = () => {
 
       if (updateError) throw updateError;
 
-      // 성공 시 결과 표시
       setResult({
         assignedNames,
         startIndex,
@@ -100,13 +98,12 @@ const App: React.FC = () => {
       });
     } catch (err: any) {
       console.error("Assignment Error:", err);
-      setError("배정 처리 중 오류가 발생했습니다.");
+      setError("배정 처리 중 오류가 발생했습니다. DB 권한 설정을 확인하세요.");
     } finally {
       setAssigning(false);
     }
   };
 
-  // 입력 취소 기능
   const handleCancelInput = () => {
     setCount(1);
     setError(null);
@@ -123,7 +120,7 @@ const App: React.FC = () => {
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="flex flex-col items-center gap-4">
           <RefreshCw className="w-10 h-10 text-blue-600 animate-spin" />
-          <p className="text-slate-600 font-bold">시스템 정보를 불러오고 있습니다...</p>
+          <p className="text-slate-600 font-bold">Supabase에서 명단을 불러오는 중...</p>
         </div>
       </div>
     );
@@ -133,7 +130,6 @@ const App: React.FC = () => {
     <div className="min-h-screen bg-[#f8fafc] py-10 px-4 sm:px-6 lg:px-8 font-sans antialiased text-slate-900">
       <div className="max-w-6xl mx-auto space-y-8">
         
-        {/* Header Section */}
         <header className="bg-white rounded-[2rem] shadow-sm border border-slate-200 p-8 flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-6">
             <div className="p-4 bg-blue-600 rounded-2xl shadow-lg shadow-blue-100">
@@ -158,18 +154,20 @@ const App: React.FC = () => {
         </header>
 
         {error && (
-          <div className="bg-red-50 border-l-4 border-red-500 p-6 rounded-2xl flex items-start gap-4 text-red-800 shadow-sm animate-in fade-in slide-in-from-top-4">
-            <AlertCircle className="w-6 h-6 shrink-0 text-red-500" />
+          <div className="bg-red-50 border-2 border-red-100 p-6 rounded-2xl flex items-start gap-4 text-red-800 shadow-sm animate-in fade-in slide-in-from-top-4">
+            <div className="p-2 bg-red-100 rounded-lg">
+              <Database className="w-6 h-6 shrink-0 text-red-600" />
+            </div>
             <div>
-              <p className="font-bold text-lg">연결 지연 혹은 설정 오류</p>
-              <p className="opacity-90">{error}</p>
+              <p className="font-bold text-lg">데이터 연결 오류</p>
+              <p className="opacity-90 font-medium">{error}</p>
+              <p className="text-xs mt-2 text-red-500 font-bold uppercase tracking-tight">Check: Table Name 'candidates', URL & Key, RLS Policies</p>
             </div>
           </div>
         )}
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           
-          {/* 배정 요청 영역 */}
           <main className="lg:col-span-7">
             <section className="bg-white rounded-[2rem] shadow-xl border border-slate-100 p-10 h-full flex flex-col">
               <div className="flex items-center gap-4 mb-10">
@@ -212,7 +210,7 @@ const App: React.FC = () => {
                     </button>
                     <button 
                       onClick={handleAssign}
-                      disabled={assigning || count <= 0}
+                      disabled={assigning || count <= 0 || !!error}
                       className="flex-[2] px-8 py-6 flex items-center justify-center gap-4 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-200 disabled:text-slate-400 text-white font-black text-xl rounded-2xl shadow-2xl shadow-blue-200 transition-all active:scale-95"
                     >
                       {assigning ? <RefreshCw className="w-7 h-7 animate-spin" /> : <CheckCircle2 className="w-7 h-7" />}
@@ -253,7 +251,6 @@ const App: React.FC = () => {
             </section>
           </main>
 
-          {/* 배정 결과 영역 */}
           <aside className="lg:col-span-5">
             <section className="bg-white rounded-[2rem] shadow-sm border border-slate-200 p-8 flex flex-col h-[650px]">
               <div className="flex items-center justify-between mb-8">
@@ -299,12 +296,18 @@ const App: React.FC = () => {
                     </div>
                   );
                 })}
+                {candidates.length === 0 && !loading && !error && (
+                  <div className="flex flex-col items-center justify-center h-full text-slate-400 space-y-2 opacity-50">
+                    <Database className="w-12 h-12" />
+                    <p className="font-bold uppercase tracking-widest text-xs">No Data Found</p>
+                  </div>
+                )}
               </div>
               
               <div className="mt-8 p-5 bg-slate-900 rounded-2xl flex items-center justify-between">
                 <div className="flex flex-col">
                   <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Current Pending</span>
-                  <span className="text-xl font-black text-white">{candidates[config?.current_index ?? 0]?.name || '배정 대기 없음'}</span>
+                  <span className="text-xl font-black text-white">{candidates[config?.current_index ?? 0]?.name || '---'}</span>
                 </div>
                 <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center">
                   <ChevronRight className="w-6 h-6 text-white" />
