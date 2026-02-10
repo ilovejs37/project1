@@ -1,5 +1,6 @@
+
 {
-  "name": "Sequential Assignee Selector",
-  "description": "An application to sequentially select a specific number of candidates from an Excel list, remembering the last selected position for subsequent rounds.",
+  "name": "기계부 퇴사자/부재자 특허결정서 담당자 배정",
+  "description": "기계부 내 퇴사자 또는 부재자 발생 시 특허결정서 처리를 위한 공정한 순환 배정 시스템",
   "requestFramePermissions": []
 }

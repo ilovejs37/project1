@@ -1,5 +1,5 @@
 {
-  "name": "sequential-assignee-selector",
+  "name": "기계부-퇴사자/부재자-특허결정서-담당자-배정",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -10,9 +10,9 @@
   },
   "dependencies": {
     "react": "^19.2.4",
-    "lucide-react": "^0.563.0",
     "react-dom": "^19.2.4",
-    "@supabase/supabase-js": "^2.48.1"
+    "lucide-react": "^0.563.0",
+    "@supabase/supabase-js": "^2.95.3"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
