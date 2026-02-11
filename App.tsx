@@ -160,7 +160,7 @@ const App: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] py-12 px-6 font-sans antialiased text-slate-900">
+    <div className="min-h-screen bg-[#f8fafc] py-12 px-6 font-sans antialiased text-slate-900 relative">
       <div className="max-w-6xl mx-auto space-y-8">
         
         <header className="bg-white rounded-[2rem] shadow-sm border border-slate-200 p-8 flex flex-col md:flex-row items-center justify-between gap-6">
@@ -199,7 +199,6 @@ const App: React.FC = () => {
             
             <div className="text-center space-y-4 relative z-10">
               <h2 className="text-3xl font-black text-slate-800 tracking-tight">배정 건수</h2>
-              <p className="text-slate-400 text-sm font-medium">대행할 결정서의 건수를 입력하세요.</p>
             </div>
 
             <div className="relative w-full max-w-[320px] z-10">
@@ -210,7 +209,7 @@ const App: React.FC = () => {
                 value={countInput}
                 placeholder="배정건수를 입력해주세요"
                 onChange={(e) => setCountInput(e.target.value)}
-                className="w-full px-6 py-10 bg-slate-50 border-4 border-slate-100 rounded-[2.5rem] focus:border-blue-500 focus:bg-white outline-none transition-all text-slate-800 text-center shadow-inner text-4xl font-black placeholder:text-lg placeholder:font-bold placeholder:text-slate-300"
+                className="w-full px-6 py-10 bg-slate-50 border-4 border-slate-100 rounded-[2.5rem] focus:border-blue-500 focus:bg-white outline-none transition-all text-slate-800 text-center shadow-inner text-4xl font-black placeholder:text-lg placeholder:font-bold placeholder:text-slate-500"
                 autoFocus
                 disabled={!!result}
               />
@@ -278,11 +277,25 @@ const App: React.FC = () => {
 
         <footer className="text-center py-8">
           <p className="text-slate-400 text-[10px] font-bold tracking-[0.2em] uppercase">
-            &copy; 2024 기계부 특허행정 자동화 솔루션
+            &copy; 2026 designed by sjc
           </p>
         </footer>
 
       </div>
+
+      {/* 우측 하단 로고 이미지 추가 */}
+      <div className="fixed bottom-6 right-6 opacity-80 hover:opacity-100 transition-opacity">
+        <img 
+          src="https://raw.githubusercontent.com/sjc-patent/resources/main/koreana_logo.png" 
+          alt="Koreana Patent Law Firm" 
+          className="h-10 w-auto object-contain"
+          onError={(e) => {
+            // 이미지 로드 실패 시 대체 텍스트나 빈 컨테이너 표시
+            (e.target as HTMLImageElement).style.display = 'none';
+          }}
+        />
+      </div>
+
       <style>{`
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
