@@ -1,9 +1,8 @@
 
 export interface Candidate {
   id: number;
-  names: string; // 'name'에서 'names'로 변경 (DB 컬럼명 일치)
-  created_index: number;
-  department: string;
+  names: string;
+  order_num: number;
 }
 
 export interface AssignmentConfig {
@@ -15,4 +14,5 @@ export interface AssignmentResult {
   assignedNames: string[];
   startIndex: number;
   endIndex: number;
+  previousIndex: number; // 취소를 위해 배정 전 인덱스 저장
 }
