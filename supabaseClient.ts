@@ -2,23 +2,45 @@
 import { createClient } from '@supabase/supabase-js';
 
 /**
- * 프로젝트 가이드라인에 따라 환경 변수는 process.env에서 직접 가져옵니다.
- * VITE_SUPABASE_URL 및 VITE_SUPABASE_ANON_KEY는 환경 설정에서 주입된 것으로 간주합니다.
+ * 전역 환경에서 변수를 찾는 함수
  */
-const supabaseUrl = process.env.VITE_SUPABASE_URL || '';
-const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY || '';
+const getEnvVar = (key: string): string => {
+  try {
+    // 1. process.env (Vercel/Node 표준)
+    if (typeof process !== 'undefined' && process.env && process.env[key]) {
+      return process.env[key] as string;
+    }
+    // 2. import.meta.env (Vite/ESM 표준)
+    // @ts-ignore
+    if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env[key]) {
+      // @ts-ignore
+      return import.meta.env[key];
+    }
+    // 3. window 전역 객체 (일부 환경 주입)
+    if (typeof window !== 'undefined' && (window as any)[key]) {
+      return (window as any)[key];
+    }
+  } catch (e) {
+    // 에러 무시
+  }
+  return '';
+};
 
-// 환경 변수 부재 시 콘솔 경고 (애플리케이션 구동 중 에러 추적용)
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn(
-    "Supabase configuration keys are missing in process.env!\n" +
-    "Ensure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are provided in the environment secrets."
+const SUPABASE_URL = getEnvVar('VITE_SUPABASE_URL');
+const SUPABASE_ANON_KEY = getEnvVar('VITE_SUPABASE_ANON_KEY');
+
+// 초기화 시 URL 검증
+const isValidUrl = SUPABASE_URL && SUPABASE_URL.startsWith('https://');
+
+if (!isValidUrl) {
+  console.error(
+    "Critical: Supabase URL missing or invalid.\n" +
+    "Found VITE_SUPABASE_URL: " + (SUPABASE_URL ? "Exists but invalid format" : "Empty")
   );
 }
 
-// createClient 호출 시 URL이 비어있으면 라이브러리 내부에서 에러가 발생하므로 
-// 실제 값이 있을 때만 정상 작동하며, 없을 경우 App.tsx의 에러 핸들링에서 잡힙니다.
+// 에러 발생 시 placeholder가 아닌 실제 환경 변수 상태를 반영하도록 함
 export const supabase = createClient(
-  supabaseUrl || 'https://placeholder.supabase.co', 
-  supabaseAnonKey || 'placeholder-key'
+  isValidUrl ? SUPABASE_URL : 'https://missing-config.supabase.co',
+  SUPABASE_ANON_KEY || 'missing-key'
 );
