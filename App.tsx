@@ -200,7 +200,7 @@ const App: React.FC = () => {
               <h2 className="text-4xl font-black text-slate-800 tracking-tight">배정 건수</h2>
             </div>
 
-            <div className="relative w-full max-w-[320px] z-10">
+            <div className="relative w-full max-w-[340px] z-10">
               <input 
                 type="number" 
                 min="1" 
@@ -208,7 +208,7 @@ const App: React.FC = () => {
                 value={countInput}
                 placeholder="배정건수를 입력해주세요"
                 onChange={(e) => setCountInput(e.target.value)}
-                className="w-full px-6 py-12 bg-slate-100 border-4 border-slate-200 rounded-[2.5rem] focus:border-blue-500 focus:bg-white outline-none transition-all text-slate-800 text-center shadow-inner text-4xl font-black placeholder:text-lg placeholder:font-bold placeholder:text-slate-500/40"
+                className="no-spinner w-full px-4 py-8 bg-slate-100 border-4 border-slate-200 rounded-[2.5rem] focus:border-blue-500 focus:bg-white outline-none transition-all text-slate-800 text-center shadow-inner text-3xl sm:text-4xl font-black placeholder:text-base sm:placeholder:text-lg placeholder:font-bold placeholder:text-slate-500/50"
                 autoFocus
                 disabled={!!result}
               />
@@ -300,6 +300,16 @@ const App: React.FC = () => {
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+        
+        /* 숫자 입력창 화살표 제거 */
+        .no-spinner::-webkit-outer-spin-button,
+        .no-spinner::-webkit-inner-spin-button {
+          -webkit-appearance: none;
+          margin: 0;
+        }
+        .no-spinner {
+          -moz-appearance: textfield;
+        }
       `}</style>
     </div>
   );
