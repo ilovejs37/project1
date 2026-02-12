@@ -17,7 +17,6 @@ const App: React.FC = () => {
   const [config, setConfig] = useState<AssignmentConfig | null>(null);
   const [loading, setLoading] = useState(true);
   const [assigning, setAssigning] = useState(false);
-  // 초기값을 빈 문자열로 설정하여 플레이스홀더가 보이게 함
   const [countInput, setCountInput] = useState<string>("");
   const [result, setResult] = useState<AssignmentResult | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -131,7 +130,7 @@ const App: React.FC = () => {
 
       setConfig(prev => prev ? { ...prev, current_index: result.previousIndex } : null);
       setResult(null);
-      setCountInput(""); // 입력창 초기화
+      setCountInput("");
     } catch (err: any) {
       console.error("Undo Error:", err);
       setError("배정 취소 중 오류가 발생했습니다.");
@@ -142,7 +141,7 @@ const App: React.FC = () => {
 
   const resetRequest = () => {
     setResult(null);
-    setCountInput(""); // 입력창 초기화 (플레이스홀더 표시용)
+    setCountInput("");
   };
 
   if (loading) {
@@ -153,7 +152,7 @@ const App: React.FC = () => {
             <div className="w-16 h-16 border-4 border-blue-100 border-t-blue-600 rounded-full animate-spin"></div>
             <LayoutDashboard className="absolute inset-0 m-auto w-6 h-6 text-blue-600" />
           </div>
-          <p className="text-slate-500 font-black tracking-tight animate-pulse">DB 동기화 중...</p>
+          <p className="text-slate-500 font-black tracking-tight animate-pulse">데이터 로드 중...</p>
         </div>
       </div>
     );
@@ -192,13 +191,13 @@ const App: React.FC = () => {
 
         <main className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
           {/* Left Side: Input Assignment */}
-          <section className="bg-white rounded-[2.5rem] shadow-xl border border-slate-100 p-10 flex flex-col items-center justify-center space-y-10 min-h-[550px] relative overflow-hidden">
+          <section className="bg-white rounded-[2.5rem] shadow-xl border border-slate-100 p-10 flex flex-col items-center justify-center space-y-12 min-h-[550px] relative overflow-hidden">
             <div className="absolute top-0 right-0 p-8 opacity-[0.02]">
               <UserPlus className="w-48 h-48" />
             </div>
             
-            <div className="text-center space-y-4 relative z-10">
-              <h2 className="text-3xl font-black text-slate-800 tracking-tight">배정 건수</h2>
+            <div className="text-center space-y-2 relative z-10">
+              <h2 className="text-4xl font-black text-slate-800 tracking-tight">배정 건수</h2>
             </div>
 
             <div className="relative w-full max-w-[320px] z-10">
@@ -209,20 +208,20 @@ const App: React.FC = () => {
                 value={countInput}
                 placeholder="배정건수를 입력해주세요"
                 onChange={(e) => setCountInput(e.target.value)}
-                className="w-full px-6 py-10 bg-slate-50 border-4 border-slate-100 rounded-[2.5rem] focus:border-blue-500 focus:bg-white outline-none transition-all text-slate-800 text-center shadow-inner text-4xl font-black placeholder:text-lg placeholder:font-bold placeholder:text-slate-500"
+                className="w-full px-6 py-12 bg-slate-100 border-4 border-slate-200 rounded-[2.5rem] focus:border-blue-500 focus:bg-white outline-none transition-all text-slate-800 text-center shadow-inner text-4xl font-black placeholder:text-lg placeholder:font-bold placeholder:text-slate-500/40"
                 autoFocus
                 disabled={!!result}
               />
               {countInput && (
-                <span className="absolute right-8 top-1/2 -translate-y-1/2 text-slate-300 font-black text-xl">건</span>
+                <span className="absolute right-8 top-1/2 -translate-y-1/2 text-slate-400 font-black text-xl">건</span>
               )}
             </div>
 
-            <div className="w-full max-w-sm z-10">
+            <div className="w-full max-sm:max-w-full z-10 max-w-sm">
               <button 
                 onClick={handleAssign}
                 disabled={assigning || !countInput || parseInt(countInput) <= 0 || !!error || !!result}
-                className="w-full py-6 flex items-center justify-center gap-4 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-100 disabled:text-slate-300 text-white font-black text-xl rounded-[2rem] transition-all shadow-xl active:scale-[0.98]"
+                className="w-full py-6 flex items-center justify-center gap-4 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-100 disabled:text-slate-300 text-white font-black text-xl rounded-[2.5rem] transition-all shadow-xl active:scale-[0.98]"
               >
                 {assigning ? <RefreshCw className="w-6 h-6 animate-spin" /> : "배정 실행"}
               </button>
@@ -236,7 +235,7 @@ const App: React.FC = () => {
                 <div className="w-20 h-20 bg-slate-50 rounded-[2rem] flex items-center justify-center mx-auto">
                   <ChevronRight className="w-10 h-10 text-slate-300" />
                 </div>
-                <p className="font-bold text-slate-400">왼쪽에서 배정을 실행하면<br/>결과가 이곳에 표시됩니다.</p>
+                <p className="font-bold text-slate-400">배정을 실행하면<br/>결과가 이곳에 표시됩니다.</p>
               </div>
             ) : (
               <div className="w-full flex flex-col items-center space-y-8 animate-in slide-in-from-right-8 duration-500">
@@ -258,14 +257,14 @@ const App: React.FC = () => {
                   <button 
                     onClick={handleUndo}
                     disabled={assigning}
-                    className="flex-1 px-6 py-4 bg-orange-500 text-white font-black text-sm rounded-[1.5rem] hover:bg-orange-600 transition-all flex items-center justify-center gap-2 group shadow-lg shadow-orange-100"
+                    className="flex-1 px-6 py-4 bg-orange-500 text-white font-black text-sm rounded-[1.5rem] hover:bg-orange-600 transition-all flex items-center justify-center gap-2 group shadow-lg shadow-orange-200"
                   >
                     <Undo2 className="w-4 h-4 group-hover:-rotate-45 transition-transform" />
                     배정 취소
                   </button>
                   <button 
                     onClick={resetRequest}
-                    className="flex-1 px-6 py-4 bg-blue-600 text-white font-black text-sm rounded-[1.5rem] hover:bg-blue-700 transition-all shadow-lg shadow-blue-100"
+                    className="flex-1 px-6 py-4 bg-blue-600 text-white font-black text-sm rounded-[1.5rem] hover:bg-blue-700 transition-all shadow-lg shadow-blue-200"
                   >
                     확인
                   </button>
@@ -283,17 +282,18 @@ const App: React.FC = () => {
 
       </div>
 
-      {/* 우측 하단 로고 이미지 추가 */}
-      <div className="fixed bottom-6 right-6 opacity-80 hover:opacity-100 transition-opacity">
-        <img 
-          src="https://raw.githubusercontent.com/sjc-patent/resources/main/koreana_logo.png" 
-          alt="Koreana Patent Law Firm" 
-          className="h-10 w-auto object-contain"
-          onError={(e) => {
-            // 이미지 로드 실패 시 대체 텍스트나 빈 컨테이너 표시
-            (e.target as HTMLImageElement).style.display = 'none';
-          }}
-        />
+      {/* 우측 하단 로고 이미지 배치 */}
+      <div className="fixed bottom-8 right-8 z-50 pointer-events-none sm:pointer-events-auto">
+        <div className="bg-white/40 backdrop-blur-sm p-3 rounded-2xl border border-white/50 shadow-sm hover:bg-white/80 transition-all duration-300">
+          <img 
+            src="https://raw.githubusercontent.com/sjc-patent/resources/main/koreana_logo.png" 
+            alt="Koreana Patent Firm" 
+            className="h-10 w-auto object-contain opacity-90"
+            onError={(e) => {
+              (e.target as HTMLImageElement).parentElement!.style.display = 'none';
+            }}
+          />
+        </div>
       </div>
 
       <style>{`
